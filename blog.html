@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Blog — Maggie Lands</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Lora:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <link rel="stylesheet" href="shared.css" />
+  <style>
+    .page-hero { padding:var(--space-lg) 0 var(--space-md);text-align:center; }
+    .page-hero h1 { font-style:italic;font-weight:400; }
+    .page-hero p { color:var(--ink-soft);font-size:1.05rem;max-width:500px;margin:0 auto; }
+
+    /* Filter bar */
+    .filter-bar { display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin:var(--space-md) auto var(--space-lg);max-width:860px; }
+    .filter-btn { padding:.45rem 1rem;font-family:var(--font-display);font-size:.85rem;background:transparent;border:1px solid var(--rule);border-radius:100px;cursor:pointer;color:var(--ink-soft);transition:all .2s; }
+    .filter-btn:hover,.filter-btn.active { background:var(--clockwork);color:var(--linen);border-color:var(--clockwork); }
+    .filter-btn.all.active { background:var(--gold);border-color:var(--gold); }
+
+    /* Grid */
+    .blog-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(1.5rem,3vw,2.5rem);margin-bottom:var(--space-xl); }
+    .post-card { display:flex;flex-direction:column; }
+    .post-thumb { aspect-ratio:4/3;overflow:hidden;margin-bottom:1.25rem;border-radius:2px;background:var(--bg-warm);position:relative;transition:transform .4s; }
+    .post-thumb img { width:100%;height:100%;object-fit:cover; }
+    .post-thumb .ph { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem; }
+    .post-card:hover .post-thumb { transform:translateY(-3px); }
+    .post-card .meta { font-family:var(--font-display);font-size:.75rem;text-transform:uppercase;letter-spacing:.2em;color:var(--gold-deep);margin-bottom:.7rem; }
+    .post-card .dot { color:var(--gold);margin:0 .5rem; }
+    .post-card h2 { font-style:italic;font-weight:400;font-size:1.4rem;margin-bottom:.6rem;transition:color .25s; }
+    .post-card:hover h2 { color:var(--clockwork); }
+    .post-card .summary { font-size:.97rem;color:var(--ink-soft);line-height:1.65;flex:1; }
+    .post-card a { text-decoration:none;color:inherit; }
+
+    .skeleton { background:linear-gradient(90deg,var(--bg-warm) 25%,var(--latte) 50%,var(--bg-warm) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:4px; }
+    @keyframes shimmer { to{background-position:-200% 0;} }
+    .skel-thumb { aspect-ratio:4/3;border-radius:2px; }
+    .skel-line { height:1.1em;margin-bottom:.5rem; }
+    .skel-line.short{width:40%;} .skel-line.med{width:65%;}
+
+    .empty-state { grid-column:1/-1;text-align:center;padding:4rem 1rem;color:var(--ink-soft); }
+    .empty-state p { font-style:italic;font-size:1.05rem; }
+
+    @media(max-width:980px){ .blog-grid{grid-template-columns:repeat(2,1fr);} }
+    @media(max-width:620px){ .blog-grid{grid-template-columns:1fr;} }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="top-ribbon"><div class="container"><span>Vol. I</span><span class="verse">"She is clothed with strength and dignity" — Proverbs 31:25</span><span id="ribbon-date"></span></div></div>
+
+  <header class="site-header"><div class="container">
+    <a href="index.html" class="logo"><span class="logo-mark">— M · L —</span><span class="logo-text">Maggie<span class="amp">&amp;</span>Lands</span><span class="logo-sub">creative writing &amp; devotional thoughts</span></a>
+    <nav class="primary-nav"><ul>
+      <li><a href="index.html">Home</a></li><li><a href="about.html">About Maggie</a></li><li><a href="blog.html" class="current">The Blog</a></li><li><a href="poetry.html">Poetry</a></li><li><a href="contact.html">Contact</a></li>
+    </ul></nav>
+  </div></header>
+
+  <main id="main">
+    <section class="page-hero"><div class="container">
+      <span class="kicker">The Blog</span>
+      <h1>All the words</h1>
+      <p>Devotionals, reflections, letters — written in the quiet and left here for you.</p>
+    </div></section>
+
+    <div class="container">
+      <div class="filter-bar" id="filter-bar">
+        <button class="filter-btn all active" onclick="filterPosts('all',this)">All Posts</button>
+        <button class="filter-btn" onclick="filterPosts('Devotional',this)">Devotional</button>
+        <button class="filter-btn" onclick="filterPosts('Poetry',this)">Poetry</button>
+        <button class="filter-btn" onclick="filterPosts('Scripture',this)">Scripture</button>
+        <button class="filter-btn" onclick="filterPosts('Quiet Time',this)">Quiet Time</button>
+        <button class="filter-btn" onclick="filterPosts('Letters',this)">Letters</button>
+        <button class="filter-btn" onclick="filterPosts('Womanhood',this)">Womanhood</button>
+        <button class="filter-btn" onclick="filterPosts('Reflection',this)">Reflection</button>
+        <button class="filter-btn" onclick="filterPosts('Seasons',this)">Seasons</button>
+        <button class="filter-btn" onclick="filterPosts('Stillness',this)">Stillness</button>
+        <button class="filter-btn" onclick="filterPosts('Sunday Thoughts',this)">Sunday Thoughts</button>
+      </div>
+
+      <div class="blog-grid" id="blog-grid">
+        <div class="post-card"><div class="skel-thumb skeleton"></div><div class="skeleton skel-line short"></div><div class="skeleton skel-line" style="height:1.8em"></div><div class="skeleton skel-line med"></div></div>
+        <div class="post-card"><div class="skel-thumb skeleton"></div><div class="skeleton skel-line short"></div><div class="skeleton skel-line" style="height:1.8em"></div><div class="skeleton skel-line med"></div></div>
+        <div class="post-card"><div class="skel-thumb skeleton"></div><div class="skeleton skel-line short"></div><div class="skeleton skel-line" style="height:1.8em"></div><div class="skeleton skel-line med"></div></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer"><div class="container">
+    <div class="footer-brand"><span class="footer-logo">Maggie Lands</span><p>A quiet place to land, between the loud things.</p></div>
+    <div class="footer-col"><h4>Explore</h4><ul><li><a href="index.html">Home</a></li><li><a href="about.html">About Maggie</a></li><li><a href="blog.html">The Blog</a></li><li><a href="poetry.html">Poetry</a></li></ul></div>
+    <div class="footer-col"><h4>Stay in Touch</h4><ul><li><a href="mailto:hello@maggielands.com">hello@maggielands.com</a></li><li><a href="contact.html">Contact form</a></li></ul></div>
+  </div><div class="footer-bottom"><span>&copy; <span id="yr"></span> Maggie Lands.</span><span class="footer-verse">"Be still, and know." — Psalm 46:10</span></div></footer>
+
+  <script>
+    firebase.initializeApp({apiKey:"AIzaSyCm__OsV8z3o9u61ZPHbM_wIXvqjy0G1rg",authDomain:"maggie-lands.firebaseapp.com",projectId:"maggie-lands",storageBucket:"maggie-lands.firebasestorage.app",messagingSenderId:"229261239825",appId:"1:229261239825:web:bbe7a01882b48691c4b3b0"});
+    const db = firebase.firestore();
+    document.getElementById('ribbon-date').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    document.getElementById('yr').textContent = new Date().getFullYear();
+
+    let allPosts = [];
+
+    function fmtDate(v){
+      if(!v) return '';
+      if(v.toDate) v=v.toDate();
+      if(typeof v==='string') v=new Date(v);
+      return v.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+    }
+
+    function cardHTML(p){
+      const thumb = p.imageUrl ? `<img src="${p.imageUrl}" alt="${p.title}" loading="lazy"/>` : `<div class="ph">✍️</div>`;
+      return `<article class="post-card">
+        <a href="post.html?id=${p.id}"><div class="post-thumb">${thumb}</div>
+        <p class="meta">${p.category||'Journal'}<span class="dot">·</span>${fmtDate(p.publishDate||p.createdAt)}</p>
+        <h2>${p.title||'Untitled'}</h2></a>
+        <p class="summary">${p.excerpt||''}</p>
+        <a href="post.html?id=${p.id}" class="read-more" style="margin-top:.75rem;font-size:.78rem;">Read more</a>
+      </article>`;
+    }
+
+    function filterPosts(cat, btn){
+      document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const grid = document.getElementById('blog-grid');
+      const filtered = cat === 'all' ? allPosts : allPosts.filter(p=>p.category===cat);
+      if(filtered.length===0){
+        grid.innerHTML = `<div class="empty-state"><p>No posts in this category yet — check back soon!</p></div>`;
+      } else {
+        grid.innerHTML = filtered.map(cardHTML).join('');
+      }
+    }
+
+    async function loadPosts(){
+      const snap = await db.collection('posts').where('status','==','published').orderBy('createdAt','desc').get();
+      allPosts = snap.docs.map(d=>({id:d.id,...d.data()}));
+      const grid = document.getElementById('blog-grid');
+      if(allPosts.length===0){
+        grid.innerHTML = `<div class="empty-state"><p>Posts are on their way — stay tuned!</p></div>`;
+        return;
+      }
+      grid.innerHTML = allPosts.map(cardHTML).join('');
+
+      // Check URL for category filter
+      const urlCat = new URLSearchParams(window.location.search).get('cat');
+      if(urlCat){
+        const btn = [...document.querySelectorAll('.filter-btn')].find(b=>b.textContent===urlCat);
+        if(btn) filterPosts(urlCat, btn);
+      }
+    }
+
+    loadPosts();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Maggie Lands — Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDK (compat version — works directly in plain HTML) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* =========================================================
+       DESIGN TOKENS — matches Maggie Lands brand
+    ========================================================= */
+    :root {
+      --clockwork: #72583E;
+      --latte: #DBC4A5;
+      --deep-olive: #44422D;
+      --cafe-noir: #443223;
+      --mauve: #755151;
+      --weathered: #A08670;
+      --linen: #FFF9F3;
+      --bg-warm: #F5EADD;
+      --gold: #B08D57;
+      --gold-soft: #C9A961;
+      --gold-deep: #8A6A3A;
+      --ink: #443223;
+      --ink-soft: #6B5340;
+      --rule: rgba(68,50,35,0.15);
+      --success: #4A7C59;
+      --danger: #8B3A3A;
+      --font-display: "Fraunces", Georgia, serif;
+      --font-body: "Lora", Georgia, serif;
+      --radius: 6px;
+      --shadow: 0 2px 12px rgba(68,50,35,0.1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--ink);
+      background: var(--bg-warm);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* =========================================================
+       LOGIN SCREEN
+    ========================================================= */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--deep-olive);
+      background-image: radial-gradient(ellipse at top, #5a5840 0%, var(--deep-olive) 60%);
+    }
+
+    .login-card {
+      background: var(--linen);
+      border-radius: var(--radius);
+      padding: 3rem 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .login-logo {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 2.2rem;
+      color: var(--ink);
+      margin-bottom: 0.3rem;
+      line-height: 1;
+    }
+
+    .login-sub {
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--gold-deep);
+      margin-bottom: 2rem;
+    }
+
+    .login-ornament {
+      width: 60px;
+      height: 1px;
+      background: var(--gold);
+      margin: 0 auto 2rem;
+    }
+
+    .login-card h2 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--ink-soft);
+      margin: 0 0 1.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--gold-deep);
+      margin-bottom: 0.4rem;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.65rem 0.9rem;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      color: var(--ink);
+      background: white;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(176,141,87,0.12);
+    }
+
+    textarea { resize: vertical; min-height: 120px; line-height: 1.7; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.5rem;
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--clockwork);
+      color: var(--linen);
+      width: 100%;
+      justify-content: center;
+    }
+
+    .btn-primary:hover { background: var(--cafe-noir); transform: translateY(-1px); }
+
+    .btn-gold {
+      background: var(--gold);
+      color: white;
+    }
+
+    .btn-gold:hover { background: var(--gold-deep); }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--ink);
+      border: 1px solid var(--rule);
+    }
+
+    .btn-outline:hover { border-color: var(--gold); color: var(--clockwork); }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-danger:hover { background: #6b2a2a; }
+
+    .btn-sm { padding: 0.4rem 0.9rem; font-size: 0.75rem; }
+
+    .login-error {
+      color: var(--danger);
+      font-size: 0.88rem;
+      margin-top: 0.75rem;
+      display: none;
+      text-align: center;
+    }
+
+    /* =========================================================
+       ADMIN LAYOUT
+    ========================================================= */
+    #admin-screen { display: none; min-height: 100vh; }
+
+    /* Top bar */
+    .topbar {
+      background: var(--deep-olive);
+      color: var(--linen);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .topbar-brand {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.3rem;
+      color: var(--linen);
+    }
+
+    .topbar-brand span {
+      font-style: normal;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--latte);
+      margin-left: 0.7rem;
+      opacity: 0.8;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .topbar-user {
+      font-size: 0.82rem;
+      color: var(--latte);
+      opacity: 0.85;
+    }
+
+    .btn-signout {
+      background: transparent;
+      border: 1px solid rgba(219,196,165,0.4);
+      color: var(--latte);
+      padding: 0.35rem 0.9rem;
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-signout:hover { border-color: var(--latte); color: white; }
+
+    /* Main layout */
+    .admin-body {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      min-height: calc(100vh - 54px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--cafe-noir);
+      padding: 1.5rem 0;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .sidebar-section {
+      padding: 0 1.2rem 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .sidebar-label {
+      font-family: var(--font-display);
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: var(--weathered);
+      margin-bottom: 0.5rem;
+      padding: 0 0.5rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.8rem;
+      border-radius: var(--radius);
+      color: var(--latte);
+      font-family: var(--font-display);
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+    .nav-item.active { background: var(--clockwork); color: var(--linen); }
+
+    .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.8; }
+
+    /* Main content area */
+    .main-content {
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    /* =========================================================
+       PANELS
+    ========================================================= */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.7rem;
+      font-weight: 400;
+      color: var(--ink);
+      margin: 0;
+    }
+
+    /* =========================================================
+       POST EDITOR
+    ========================================================= */
+    .editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .editor-main, .editor-sidebar {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+    }
+
+    .editor-sidebar .form-group { margin-bottom: 1.1rem; }
+
+    .editor-section-title {
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--gold-deep);
+      margin: 0 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    /* Title input — larger */
+    #post-title {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.4rem;
+      font-weight: 400;
+      padding: 0.75rem 0.9rem;
+      border: none;
+      border-bottom: 2px solid var(--rule);
+      border-radius: 0;
+      background: transparent;
+      width: 100%;
+      margin-bottom: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    #post-title:focus {
+      outline: none;
+      border-bottom-color: var(--gold);
+      box-shadow: none;
+    }
+
+    #post-title::placeholder { color: var(--latte); }
+
+    /* Excerpt */
+    #post-excerpt {
+      min-height: 80px;
+      font-style: italic;
+      color: var(--ink-soft);
+    }
+
+    /* Body */
+    #post-body { min-height: 320px; font-size: 0.97rem; }
+
+    /* Formatting toolbar */
+    .format-bar {
+      display: flex;
+      gap: 0.4rem;
+      margin-bottom: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .fmt-btn {
+      padding: 0.3rem 0.65rem;
+      font-family: var(--font-display);
+      font-size: 0.78rem;
+      background: var(--bg-warm);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--ink-soft);
+      transition: all 0.15s;
+    }
+
+    .fmt-btn:hover { background: var(--latte); color: var(--ink); }
+
+    /* Image upload area */
+    .image-upload-area {
+      border: 2px dashed var(--rule);
+      border-radius: var(--radius);
+      padding: 1.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .image-upload-area:hover { border-color: var(--gold); background: rgba(176,141,87,0.04); }
+
+    .image-upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .image-upload-area .upload-icon {
+      font-size: 1.8rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .image-upload-area p {
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      margin: 0;
+    }
+
+    .image-preview {
+      width: 100%;
+      aspect-ratio: 16/9;
+      object-fit: cover;
+      border-radius: var(--radius);
+      margin-bottom: 0.5rem;
+      display: none;
+    }
+
+    /* Toggle switches */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+    }
+
+    .toggle-label {
+      font-size: 0.9rem;
+      color: var(--ink);
+    }
+
+    .toggle {
+      position: relative;
+      width: 42px;
+      height: 24px;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: #ccc;
+      border-radius: 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+
+    .toggle input:checked + .toggle-slider { background: var(--clockwork); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* Category chips */
+    .cat-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .cat-chip {
+      padding: 0.3rem 0.7rem;
+      font-size: 0.8rem;
+      font-family: var(--font-display);
+      border: 1px solid var(--rule);
+      border-radius: 100px;
+      cursor: pointer;
+      background: transparent;
+      color: var(--ink-soft);
+      transition: all 0.15s;
+    }
+
+    .cat-chip.selected {
+      background: var(--clockwork);
+      color: var(--linen);
+      border-color: var(--clockwork);
+    }
+
+    .cat-chip:hover:not(.selected) { border-color: var(--gold); color: var(--clockwork); }
+
+    /* Save status */
+    .save-status {
+      font-size: 0.82rem;
+      color: var(--success);
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .save-status.visible { display: flex; }
+    .save-status.error { color: var(--danger); }
+
+    /* =========================================================
+       POSTS LIST
+    ========================================================= */
+    .posts-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    .post-row {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.1rem 1.3rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s;
+    }
+
+    .post-row:hover { transform: translateX(3px); }
+
+    .post-row-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: 4px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--bg-warm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .post-row-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+
+    .post-row-info { flex: 1; min-width: 0; }
+
+    .post-row-title {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.05rem;
+      margin: 0 0 0.2rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .post-row-meta {
+      font-size: 0.78rem;
+      color: var(--ink-soft);
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.55rem;
+      border-radius: 100px;
+      font-size: 0.72rem;
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .badge-published { background: rgba(74,124,89,0.15); color: var(--success); }
+    .badge-draft { background: rgba(160,134,112,0.2); color: var(--weathered); }
+    .badge-featured { background: rgba(176,141,87,0.18); color: var(--gold-deep); }
+
+    .post-row-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    /* =========================================================
+       DASHBOARD STATS
+    ========================================================= */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.3rem 1.5rem;
+      box-shadow: var(--shadow);
+      border-left: 3px solid var(--gold);
+    }
+
+    .stat-number {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 400;
+      color: var(--clockwork);
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--ink-soft);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-family: var(--font-display);
+    }
+
+    /* Recent posts in dashboard */
+    .recent-section { background: white; border-radius: var(--radius); padding: 1.3rem; box-shadow: var(--shadow); }
+    .recent-section h3 {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 400;
+      font-size: 1.2rem;
+      margin: 0 0 1rem;
+      color: var(--ink);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.7rem;
+    }
+
+    /* Upload progress */
+    .upload-progress {
+      height: 4px;
+      background: var(--rule);
+      border-radius: 4px;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .upload-progress-bar {
+      height: 100%;
+      background: var(--gold);
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--deep-olive);
+      color: var(--linen);
+      padding: 0.8rem 1.3rem;
+      border-radius: var(--radius);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 1000;
+      max-width: 320px;
+      border-left: 3px solid var(--gold);
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-left-color: var(--success); }
+    .toast.error { border-left-color: var(--danger); background: #3d1a1a; }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      color: var(--ink-soft);
+    }
+
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state h3 { font-family: var(--font-display); font-style: italic; font-weight: 400; margin-bottom: 0.5rem; }
+    .empty-state p { font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+    /* Loading spinner */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--rule);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Confirm dialog */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(68,50,35,0.6);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay.show { display: flex; }
+
+    .dialog {
+      background: var(--linen);
+      border-radius: var(--radius);
+      padding: 2rem;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .dialog h3 { font-family: var(--font-display); font-style: italic; font-weight: 400; margin: 0 0 0.5rem; }
+    .dialog p { font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 1.5rem; }
+    .dialog-actions { display: flex; gap: 0.75rem; justify-content: center; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .editor-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .admin-body { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Maggie Lands</div>
+    <div class="login-sub">Author Dashboard</div>
+    <div class="login-ornament"></div>
+    <h2>Sign in to continue</h2>
+
+    <div class="form-group">
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email" />
+    </div>
+
+    <div class="form-group">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn btn-primary" id="login-btn" onclick="handleLogin()">
+      Sign In
+    </button>
+
+    <p class="login-error" id="login-error"></p>
+  </div>
+</div>
+
+<!-- ===== ADMIN SCREEN ===== -->
+<div id="admin-screen">
+
+  <!-- Top bar -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      Maggie Lands
+      <span>Admin</span>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="user-email"></span>
+      <button class="btn-signout" onclick="handleSignOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <div class="admin-body">
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Menu</div>
+        <button class="nav-item active" onclick="showPanel('dashboard', this)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          Dashboard
+        </button>
+        <button class="nav-item" onclick="showPanel('new-post', this); resetEditor()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          New Post
+        </button>
+        <button class="nav-item" onclick="showPanel('all-posts', this); loadPosts()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 10h16M4 14h10"/></svg>
+          All Posts
+        </button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Site</div>
+        <button class="nav-item" onclick="window.open('index.html','_blank')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          View Site
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="main-content">
+
+      <!-- ===== DASHBOARD PANEL ===== -->
+      <div id="panel-dashboard" class="panel active">
+        <div class="panel-header">
+          <h1 class="panel-title">Good morning, Maggie ☕</h1>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number" id="stat-total">—</div>
+            <div class="stat-label">Total Posts</div>
+          </div>
+          <div class="stat-card" style="border-left-color: var(--success)">
+            <div class="stat-number" id="stat-published">—</div>
+            <div class="stat-label">Published</div>
+          </div>
+          <div class="stat-card" style="border-left-color: var(--mauve)">
+            <div class="stat-number" id="stat-drafts">—</div>
+            <div class="stat-label">Drafts</div>
+          </div>
+        </div>
+
+        <div class="recent-section">
+          <h3>Recent Posts</h3>
+          <div id="dashboard-recent"></div>
+        </div>
+      </div>
+
+      <!-- ===== NEW / EDIT POST PANEL ===== -->
+      <div id="panel-new-post" class="panel">
+        <div class="panel-header">
+          <h1 class="panel-title" id="editor-title">New Post</h1>
+          <div style="display:flex; gap:0.75rem; align-items:center;">
+            <span class="save-status" id="save-status"></span>
+            <button class="btn btn-outline btn-sm" onclick="savePost('draft')">Save Draft</button>
+            <button class="btn btn-gold" onclick="savePost('published')">
+              Publish
+            </button>
+          </div>
+        </div>
+
+        <div class="editor-grid">
+          <!-- Main editor -->
+          <div class="editor-main">
+            <input type="text" id="post-title" placeholder="Post title…" />
+
+            <div class="form-group">
+              <label>Excerpt <small style="text-transform:none;letter-spacing:0;font-style:italic;color:var(--ink-soft)">— Short summary shown in post cards</small></label>
+              <textarea id="post-excerpt" placeholder="A short sentence or two about this post…"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Body</label>
+              <div class="format-bar">
+                <button class="fmt-btn" onclick="wrapText('**','**')" title="Bold">B</button>
+                <button class="fmt-btn" style="font-style:italic" onclick="wrapText('_','_')" title="Italic">I</button>
+                <button class="fmt-btn" onclick="insertHeading()" title="Heading">H2</button>
+                <button class="fmt-btn" onclick="insertDivider()" title="Divider">—</button>
+                <button class="fmt-btn" onclick="insertQuote()" title="Quote">" "</button>
+                <button class="fmt-btn" onclick="insertBreak()" title="Line break">↵</button>
+              </div>
+              <textarea id="post-body" placeholder="Write your post here…&#10;&#10;You can use simple markdown:&#10;**bold**, _italic_, ## Heading, > blockquote"></textarea>
+              <p style="font-size:0.78rem;color:var(--ink-soft);margin:0.4rem 0 0;">Supports basic Markdown: **bold**, _italic_, ## Heading, > quote</p>
+            </div>
+          </div>
+
+          <!-- Editor sidebar -->
+          <div class="editor-sidebar">
+            <p class="editor-section-title">Post Settings</p>
+
+            <!-- Status toggles -->
+            <div class="toggle-row">
+              <span class="toggle-label">Published</span>
+              <label class="toggle">
+                <input type="checkbox" id="toggle-published" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label">Featured Post</span>
+              <label class="toggle">
+                <input type="checkbox" id="toggle-featured" />
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+
+            <div class="form-group" style="margin-top:0.5rem;">
+              <label>Publish Date</label>
+              <input type="date" id="post-date" />
+            </div>
+
+            <div class="form-group">
+              <label>Read Time (minutes)</label>
+              <input type="number" id="post-readtime" placeholder="5" min="1" max="60" style="width:100%" />
+            </div>
+
+            <hr style="border:none;border-top:1px solid var(--rule);margin:1rem 0;" />
+            <p class="editor-section-title">Category</p>
+
+            <div class="cat-chips" id="category-chips">
+              <button class="cat-chip" onclick="selectCat(this, 'Devotional')">Devotional</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Poetry')">Poetry</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Quiet Time')">Quiet Time</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Scripture')">Scripture</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Letters')">Letters</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Womanhood')">Womanhood</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Stillness')">Stillness</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Sunday Thoughts')">Sunday Thoughts</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Seasons')">Seasons</button>
+              <button class="cat-chip" onclick="selectCat(this, 'Reflection')">Reflection</button>
+            </div>
+
+            <hr style="border:none;border-top:1px solid var(--rule);margin:1rem 0;" />
+            <p class="editor-section-title">Cover Image</p>
+
+            <img id="image-preview" class="image-preview" alt="Cover preview" />
+
+            <div class="image-upload-area" id="upload-area">
+              <input type="file" id="image-input" accept="image/*" onchange="handleImageUpload(this)" />
+              <div class="upload-icon">🖼</div>
+              <p>Click to upload image<br/><small>JPG, PNG, WebP</small></p>
+            </div>
+
+            <div class="upload-progress" id="upload-progress">
+              <div class="upload-progress-bar" id="upload-bar"></div>
+            </div>
+
+            <p id="upload-status" style="font-size:0.78rem;color:var(--ink-soft);margin:0.4rem 0 0;"></p>
+
+            <!-- Hidden fields -->
+            <input type="hidden" id="post-id" />
+            <input type="hidden" id="post-image-url" />
+            <input type="hidden" id="selected-category" />
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ALL POSTS PANEL ===== -->
+      <div id="panel-all-posts" class="panel">
+        <div class="panel-header">
+          <h1 class="panel-title">All Posts</h1>
+          <button class="btn btn-gold" onclick="showPanel('new-post', null); resetEditor()">+ New Post</button>
+        </div>
+
+        <div id="posts-container">
+          <div class="empty-state">
+            <div class="spinner"></div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Confirm delete dialog -->
+<div class="overlay" id="confirm-overlay">
+  <div class="dialog">
+    <h3>Delete this post?</h3>
+    <p>This can't be undone. The post will be permanently removed.</p>
+    <div class="dialog-actions">
+      <button class="btn btn-outline" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+<script>
+  // ─── Firebase Config ───────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyCm__OsV8z3o9u61ZPHbM_wIXvqjy0G1rg",
+    authDomain: "maggie-lands.firebaseapp.com",
+    projectId: "maggie-lands",
+    storageBucket: "maggie-lands.firebasestorage.app",
+    messagingSenderId: "229261239825",
+    appId: "1:229261239825:web:bbe7a01882b48691c4b3b0"
+  };
+
+  // ─── Cloudinary Config ─────────────────────────────────────
+  const CLOUDINARY_CLOUD = "dnbnaglrp";
+  const CLOUDINARY_PRESET = "maggie-lands-upload";
+
+  // ─── Init Firebase ─────────────────────────────────────────
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // ─── Auth State ────────────────────────────────────────────
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('admin-screen').style.display = 'block';
+      document.getElementById('user-email').textContent = user.email;
+      loadDashboard();
+    } else {
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('admin-screen').style.display = 'none';
+    }
+  });
+
+  // ─── Login ─────────────────────────────────────────────────
+  async function handleLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    const btn = document.getElementById('login-btn');
+    const errEl = document.getElementById('login-error');
+
+    if (!email || !password) {
+      errEl.textContent = 'Please enter your email and password.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.textContent = 'Signing in…';
+    btn.disabled = true;
+    errEl.style.display = 'none';
+
+    try {
+      await auth.signInWithEmailAndPassword(email, password);
+    } catch (e) {
+      errEl.textContent = 'Incorrect email or password. Please try again.';
+      errEl.style.display = 'block';
+      btn.textContent = 'Sign In';
+      btn.disabled = false;
+    }
+  }
+
+  // Allow Enter key to submit login
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+      handleLogin();
+    }
+  });
+
+  // ─── Sign Out ──────────────────────────────────────────────
+  async function handleSignOut() {
+    await auth.signOut();
+  }
+
+  // ─── Panel Navigation ──────────────────────────────────────
+  function showPanel(name, navEl) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+
+    if (navEl) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      navEl.classList.add('active');
+    }
+  }
+
+  // ─── Dashboard ─────────────────────────────────────────────
+  async function loadDashboard() {
+    try {
+      const snap = await db.collection('posts').orderBy('createdAt', 'desc').get();
+      const posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const total = posts.length;
+      const published = posts.filter(p => p.status === 'published').length;
+      const drafts = posts.filter(p => p.status === 'draft').length;
+
+      document.getElementById('stat-total').textContent = total;
+      document.getElementById('stat-published').textContent = published;
+      document.getElementById('stat-drafts').textContent = drafts;
+
+      const recentEl = document.getElementById('dashboard-recent');
+      if (posts.length === 0) {
+        recentEl.innerHTML = `<p style="color:var(--ink-soft);font-style:italic;font-size:0.9rem;padding:1rem 0;">No posts yet — write your first one!</p>`;
+      } else {
+        recentEl.innerHTML = posts.slice(0, 5).map(p => `
+          <div class="post-row">
+            <div class="post-row-thumb">${p.imageUrl ? `<img src="${p.imageUrl}" alt="" />` : '📝'}</div>
+            <div class="post-row-info">
+              <div class="post-row-title">${p.title || 'Untitled'}</div>
+              <div class="post-row-meta">
+                <span>${formatDate(p.publishDate || p.createdAt)}</span>
+                <span class="badge ${p.status === 'published' ? 'badge-published' : 'badge-draft'}">${p.status || 'draft'}</span>
+                ${p.category ? `<span>${p.category}</span>` : ''}
+              </div>
+            </div>
+            <div class="post-row-actions">
+              <button class="btn btn-outline btn-sm" onclick="editPost('${p.id}')">Edit</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // ─── Load All Posts ────────────────────────────────────────
+  async function loadPosts() {
+    const container = document.getElementById('posts-container');
+    container.innerHTML = `<div class="empty-state"><div class="spinner"></div></div>`;
+
+    try {
+      const snap = await db.collection('posts').orderBy('createdAt', 'desc').get();
+      const posts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      if (posts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">✍️</div>
+            <h3>No posts yet</h3>
+            <p>Your first post is waiting to be written.</p>
+            <button class="btn btn-gold" onclick="showPanel('new-post', null); resetEditor()">Write First Post</button>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = `<div class="posts-list">${posts.map(p => `
+        <div class="post-row">
+          <div class="post-row-thumb">${p.imageUrl ? `<img src="${p.imageUrl}" alt="" />` : '📝'}</div>
+          <div class="post-row-info">
+            <div class="post-row-title">${p.title || 'Untitled'}</div>
+            <div class="post-row-meta">
+              <span>${formatDate(p.publishDate || p.createdAt)}</span>
+              <span class="badge ${p.status === 'published' ? 'badge-published' : 'badge-draft'}">${p.status || 'draft'}</span>
+              ${p.category ? `<span>${p.category}</span>` : ''}
+              ${p.featured ? `<span class="badge badge-featured">⭐ Featured</span>` : ''}
+            </div>
+          </div>
+          <div class="post-row-actions">
+            <button class="btn btn-outline btn-sm" onclick="editPost('${p.id}')">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="confirmDelete('${p.id}')">Delete</button>
+          </div>
+        </div>
+      `).join('')}</div>`;
+    } catch (e) {
+      container.innerHTML = `<p style="color:var(--danger)">Error loading posts. Please refresh.</p>`;
+    }
+  }
+
+  // ─── Editor ────────────────────────────────────────────────
+  let selectedCategory = '';
+
+  function resetEditor() {
+    document.getElementById('post-id').value = '';
+    document.getElementById('post-title').value = '';
+    document.getElementById('post-excerpt').value = '';
+    document.getElementById('post-body').value = '';
+    document.getElementById('post-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('post-readtime').value = '';
+    document.getElementById('post-image-url').value = '';
+    document.getElementById('post-id').value = '';
+    document.getElementById('toggle-published').checked = false;
+    document.getElementById('toggle-featured').checked = false;
+    document.getElementById('image-preview').style.display = 'none';
+    document.getElementById('upload-area').style.display = 'block';
+    document.getElementById('upload-status').textContent = '';
+    document.getElementById('editor-title').textContent = 'New Post';
+    document.getElementById('save-status').className = 'save-status';
+
+    selectedCategory = '';
+    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+  }
+
+  function selectCat(el, cat) {
+    document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedCategory = cat;
+  }
+
+  async function editPost(id) {
+    showPanel('new-post', null);
+    resetEditor();
+    document.getElementById('editor-title').textContent = 'Edit Post';
+
+    try {
+      const doc = await db.collection('posts').doc(id).get();
+      if (!doc.exists) { showToast('Post not found.', 'error'); return; }
+      const p = doc.data();
+
+      document.getElementById('post-id').value = id;
+      document.getElementById('post-title').value = p.title || '';
+      document.getElementById('post-excerpt').value = p.excerpt || '';
+      document.getElementById('post-body').value = p.body || '';
+      document.getElementById('post-date').value = p.publishDate || new Date().toISOString().split('T')[0];
+      document.getElementById('post-readtime').value = p.readTime || '';
+      document.getElementById('toggle-published').checked = p.status === 'published';
+      document.getElementById('toggle-featured').checked = p.featured || false;
+      document.getElementById('post-image-url').value = p.imageUrl || '';
+
+      if (p.imageUrl) {
+        const preview = document.getElementById('image-preview');
+        preview.src = p.imageUrl;
+        preview.style.display = 'block';
+        document.getElementById('upload-area').style.display = 'none';
+      }
+
+      if (p.category) {
+        selectedCategory = p.category;
+        document.querySelectorAll('.cat-chip').forEach(c => {
+          if (c.textContent === p.category) c.classList.add('selected');
+        });
+      }
+    } catch (e) {
+      showToast('Error loading post.', 'error');
+    }
+  }
+
+  async function savePost(forcedStatus) {
+    const title = document.getElementById('post-title').value.trim();
+    if (!title) {
+      showToast('Please add a title before saving.', 'error');
+      document.getElementById('post-title').focus();
+      return;
+    }
+
+    const statusEl = document.getElementById('save-status');
+    statusEl.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;"></div> Saving…';
+    statusEl.className = 'save-status visible';
+
+    const id = document.getElementById('post-id').value;
+    const isPublished = forcedStatus === 'published' || document.getElementById('toggle-published').checked;
+
+    const data = {
+      title,
+      excerpt: document.getElementById('post-excerpt').value.trim(),
+      body: document.getElementById('post-body').value.trim(),
+      category: selectedCategory,
+      publishDate: document.getElementById('post-date').value,
+      readTime: parseInt(document.getElementById('post-readtime').value) || null,
+      imageUrl: document.getElementById('post-image-url').value || '',
+      status: isPublished ? 'published' : 'draft',
+      featured: document.getElementById('toggle-featured').checked,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+
+    try {
+      if (id) {
+        await db.collection('posts').doc(id).update(data);
+      } else {
+        data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        const ref = await db.collection('posts').add(data);
+        document.getElementById('post-id').value = ref.id;
+        document.getElementById('editor-title').textContent = 'Edit Post';
+      }
+
+      statusEl.textContent = '✓ Saved';
+      statusEl.className = 'save-status visible';
+      document.getElementById('toggle-published').checked = isPublished;
+      showToast(isPublished ? 'Post published!' : 'Draft saved.', 'success');
+      loadDashboard();
+    } catch (e) {
+      statusEl.textContent = '✗ Error saving';
+      statusEl.className = 'save-status visible error';
+      showToast('Error saving post. Please try again.', 'error');
+    }
+  }
+
+  // ─── Image Upload (Cloudinary) ─────────────────────────────
+  async function handleImageUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const progressEl = document.getElementById('upload-progress');
+    const barEl = document.getElementById('upload-bar');
+    const statusEl = document.getElementById('upload-status');
+
+    progressEl.style.display = 'block';
+    statusEl.textContent = 'Uploading image…';
+    barEl.style.width = '20%';
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_PRESET);
+
+    try {
+      barEl.style.width = '60%';
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      barEl.style.width = '90%';
+      const data = await res.json();
+
+      if (data.secure_url) {
+        document.getElementById('post-image-url').value = data.secure_url;
+        const preview = document.getElementById('image-preview');
+        preview.src = data.secure_url;
+        preview.style.display = 'block';
+        document.getElementById('upload-area').style.display = 'none';
+        barEl.style.width = '100%';
+        statusEl.textContent = '✓ Image uploaded';
+        showToast('Image uploaded successfully!', 'success');
+      } else {
+        throw new Error('Upload failed');
+      }
+    } catch (e) {
+      statusEl.textContent = '✗ Upload failed. Please try again.';
+      progressEl.style.display = 'none';
+      showToast('Image upload failed.', 'error');
+    }
+  }
+
+  // ─── Delete ────────────────────────────────────────────────
+  let pendingDeleteId = null;
+
+  function confirmDelete(id) {
+    pendingDeleteId = id;
+    document.getElementById('confirm-overlay').classList.add('show');
+    document.getElementById('confirm-delete-btn').onclick = async () => {
+      try {
+        await db.collection('posts').doc(pendingDeleteId).delete();
+        closeConfirm();
+        showToast('Post deleted.', 'success');
+        loadPosts();
+        loadDashboard();
+      } catch (e) {
+        showToast('Error deleting post.', 'error');
+      }
+    };
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('show');
+    pendingDeleteId = null;
+  }
+
+  // ─── Formatting helpers ────────────────────────────────────
+  function wrapText(before, after) {
+    const ta = document.getElementById('post-body');
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    const selected = ta.value.substring(start, end) || 'text';
+    ta.value = ta.value.substring(0, start) + before + selected + after + ta.value.substring(end);
+    ta.focus();
+    ta.selectionStart = start + before.length;
+    ta.selectionEnd = start + before.length + selected.length;
+  }
+
+  function insertHeading() {
+    const ta = document.getElementById('post-body');
+    const pos = ta.selectionStart;
+    const text = '\n\n## Heading\n\n';
+    ta.value = ta.value.substring(0, pos) + text + ta.value.substring(pos);
+    ta.focus();
+  }
+
+  function insertDivider() {
+    const ta = document.getElementById('post-body');
+    const pos = ta.selectionStart;
+    ta.value = ta.value.substring(0, pos) + '\n\n---\n\n' + ta.value.substring(pos);
+    ta.focus();
+  }
+
+  function insertQuote() {
+    const ta = document.getElementById('post-body');
+    const pos = ta.selectionStart;
+    ta.value = ta.value.substring(0, pos) + '\n\n> Your quote here\n\n' + ta.value.substring(pos);
+    ta.focus();
+  }
+
+  function insertBreak() {
+    const ta = document.getElementById('post-body');
+    const pos = ta.selectionStart;
+    ta.value = ta.value.substring(0, pos) + '\n\n' + ta.value.substring(pos);
+    ta.focus();
+  }
+
+  // ─── Toast ─────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = 'toast'; }, 3500);
+  }
+
+  // ─── Utilities ─────────────────────────────────────────────
+  function formatDate(val) {
+    if (!val) return '—';
+    if (val.toDate) val = val.toDate();
+    if (typeof val === 'string') val = new Date(val);
+    return val.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  // Set today's date as default
+  document.getElementById('post-date').value = new Date().toISOString().split('T')[0];
+</script>
+</body>
+</html>
